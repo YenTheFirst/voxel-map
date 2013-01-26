@@ -1,3 +1,9 @@
+//var PNG = 
+require('./node_modules/png-js/zlib') //get the webby version of png.js
+require('./node_modules/png-js/png') //get the webby version of png.js
+//the_png = PNG;
+//I don't know how to make this work. just adding directly to demo page for now?
+
 module.exports = MapChunker
 function MapChunker(opts) {
   this.origin = opts.origin;
@@ -17,6 +23,7 @@ function MapChunker(opts) {
   //2nd, get the zoom level that's closest to that many voxels per tile. (each zoom level has half voxels per tile)
   var ratio = voxel_len / this.chunk_size;
   var zoom = Math.round( Math.log(ratio) / Math.log(2) );
+  this.zoom = zoom;
 
   //calculate origin tile in tile coordinates.
   //TODO: actually implement.
@@ -32,21 +39,35 @@ MapChunker.prototype.generateVoxelChunk = function(low_bounds, high_bounds, cx,c
   var len = Math.pow(this.chunk_size,3);
   var voxels = new Int8Array(len);
   for (var i=0; i<voxels.length; i++) {voxels[i] = 0;}
+  var the_chunk = {
+    voxels:voxels,
+    dims:[this.chunk_size, this.chunk_size, this.chunk_size]
+  };
+
   if (cy < 0 || cy > 0) {
     //if we're not a ground-level tile, return a simple result.
     //for now, assume empty
   }
   else {
     //get an image tile, and render it into our chunk
-    //actually for now, just put a 1 in all x,y=0,z
-    for (var x=0;x<this.chunk_size;x++){
-      for (var z=0; z<this.chunk_size;z++){
-        voxels[x+z*this.chunk_size*this.chunk_size]=1;
+    var url = this.tile_url.replace("{X}", this.origin_tile.x + cx)
+      .replace("{Y}", this.origin_tile.y + cz)
+      .replace("{Z}", this.zoom);
+    var chunk_size = this.chunk_size;
+
+    PNG.load(url, function(img){
+      console.log(url);
+      var pixel_data = img.decodePixels();
+      //for now, just a simple guess at the image
+      //assume img is 256x256
+      for (var x=0;x<chunk_size;x++){
+        for (var z=0; z<chunk_size;z++){
+          if (pixel_data[x*8+z*8*256] == 0) {
+            the_chunk.voxels[x+z*chunk_size*chunk_size]=1;
+          }
+        }
       }
-    }
+    });
   }
-  return {
-    voxels:voxels,
-    dims:[this.chunk_size, this.chunk_size, this.chunk_size]
-  };
+  return the_chunk;
 }
