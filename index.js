@@ -67,6 +67,7 @@ MapChunker.prototype.generateVoxelChunk = function(low_bounds, high_bounds, cx,c
           }
         }
       }
+      the_chunk.loaded=true;
     });
   }
   return the_chunk;
