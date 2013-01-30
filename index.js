@@ -34,19 +34,21 @@ function MapChunker(opts) {
   };
 }
 
-MapChunker.prototype.generateVoxelChunk = function(low_bounds, high_bounds, cx,cy,cz){
+MapChunker.prototype.generateVoxelChunk = function(cx, cy, cz, callback){
   //set up a default empty array
   var len = Math.pow(this.chunk_size,3);
   var voxels = new Int8Array(len);
   for (var i=0; i<voxels.length; i++) {voxels[i] = 0;}
   var the_chunk = {
-    voxels:voxels,
-    dims:[this.chunk_size, this.chunk_size, this.chunk_size]
+    voxels: voxels,
+    dims: [this.chunk_size, this.chunk_size, this.chunk_size],
+    position: [cx, cy, cz]
   };
 
   if (cy < 0 || cy > 0) {
     //if we're not a ground-level tile, return a simple result.
     //for now, assume empty
+    callback(the_chunk);
   }
   else {
     //get an image tile, and render it into our chunk
@@ -67,8 +69,7 @@ MapChunker.prototype.generateVoxelChunk = function(low_bounds, high_bounds, cx,c
           }
         }
       }
-      the_chunk.loaded=true;
+      callback(the_chunk);
     });
   }
-  return the_chunk;
 }

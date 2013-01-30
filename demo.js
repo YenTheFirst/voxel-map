@@ -7,11 +7,18 @@ var my_map = new MapChunker({
 });
 window.my_map = my_map;
 var game = createGame({
-  generateVoxelChunk: function(){
-    return my_map.generateVoxelChunk.apply(my_map,arguments);
-  },
   startingPosition: [185,100,0],
-  texturePath: texturePath
+  texturePath: texturePath,
+  generateChunks: false //we'll set a manual provider
+});
+
+game.voxels.on('missingChunk', function(chunkPos) {
+  //this replaces both parts of voxel-engine and voxel
+  //specifically, voxel.generateChunk.
+  my_map.generateVoxelChunk(chunkPos[0], chunkPos[1], chunkPos[2], function(chunk) {
+    game.voxels.chunks[chunkPos.join('|')] = chunk;
+    game.showChunk(chunk);
+  });
 });
 
 window.game = game;
@@ -22,14 +29,3 @@ container.addEventListener('click', function() {
     game.requestPointerLock(container);
 })
 
-//hacky reload of image tiles.
-setInterval(function() {
-  for (key in game.voxels.chunks){
-    var chunk = game.voxels.chunks[key];
-    if (chunk.loaded && !chunk.shown) {
-      game.showChunk(chunk);
-      chunk.shown = true;
-    }
-  }
-  game.voxels.generateMissingChunks(game.controls.yawObject.position);
-}, 1000);
