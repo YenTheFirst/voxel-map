@@ -21,6 +21,8 @@ game.voxels.on('missingChunk', function(chunkPos) {
   });
 });
 
+game.voxels.requestMissingChunks(game.worldOrigin);
+
 window.game = game;
 var container = document.querySelector('#container')
 game.appendTo(container);
