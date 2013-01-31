@@ -1,8 +1,4 @@
-//var PNG = 
-require('./node_modules/png-js/zlib') //get the webby version of png.js
-require('./node_modules/png-js/png') //get the webby version of png.js
-//the_png = PNG;
-//I don't know how to make this work. just adding directly to demo page for now?
+var PNGReader = require('png.js');
 
 module.exports = MapChunker
 function MapChunker(opts) {
@@ -57,19 +53,27 @@ MapChunker.prototype.generateVoxelChunk = function(cx, cy, cz, callback){
       .replace("{Z}", this.zoom);
     var chunk_size = this.chunk_size;
 
-    PNG.load(url, function(img){
-      console.log(url);
-      var pixel_data = img.decodePixels();
-      //for now, just a simple guess at the image
-      //assume img is 256x256
-      for (var x=0;x<chunk_size;x++){
-        for (var z=0; z<chunk_size;z++){
-          if (pixel_data[x*8+z*8*256] == 0) {
-            the_chunk.voxels[x+z*chunk_size*chunk_size]=1;
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', url, true);
+    xhr.responseType = 'arraybuffer';
+    xhr.onload = function(e) {
+      if (this.status == 200) {
+        var reader = new PNGReader(this.response);
+        reader.parse(function(err, png) {
+          console.log(png);
+          for (var x=0;x<chunk_size;x++){
+            for (var z=0; z<chunk_size;z++){
+              var color = png.getPixel(x*8, z*8);
+              if (color[0] > 128) {
+                the_chunk.voxels[x+z*chunk_size*chunk_size]=1;
+              }
+            }
           }
-        }
+          callback(the_chunk);
+        });
       }
-      callback(the_chunk);
-    });
+    };
+    xhr.send();
+
   }
 }
